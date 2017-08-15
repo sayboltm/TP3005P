@@ -19,6 +19,10 @@
 import serial
 import time
 
+######################
+### User Params:
+port = 'COM6'
+#####################
 #Create the global serial object
 ser1 = serial.Serial()
 
@@ -128,9 +132,10 @@ def status_get():
 
 
 # Test Program
-def test():
+def test(port):
 
-    init_comm("Com4")
+#    init_comm("Com4")
+    init_comm(port)
 
 
     volts_setpoint_set(5.5)
@@ -164,4 +169,4 @@ def test():
 
 
 
-#test()
+test(port)
