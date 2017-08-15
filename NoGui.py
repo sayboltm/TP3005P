@@ -3,6 +3,7 @@
 
 import sys
 import TP3005P as lib
+import BatteryCharger as Bat
 
 #### User Params ####
 port = 'COM6'
@@ -80,6 +81,11 @@ def startupNoGUI():
             print('output state, 0 for off, 1 for on')
             state = input('O or 1:')
             lib.output_state(int(state))
+        elif mode == 10:
+            print('Running Charger!')
+            Bat.ChargeBattery()
+            break
+
         else:
             print('Invalid input! Redo.')
 
