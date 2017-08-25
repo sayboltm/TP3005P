@@ -6,11 +6,12 @@ import TP3005P as lib
 import BatteryCharger as Bat
 
 #### User Params ####
-port = 'COM6'
+#port = 'COM6'
+#port = 'ttyS31'
 #####################
 
 
-def startupNoGUI():
+def startupNoGUI(port):
     lib.init_comm(port)
     # TODO: Fix error #1 caused by init comms when psu is off
     while True:

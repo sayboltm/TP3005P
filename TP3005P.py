@@ -21,7 +21,8 @@ import time
 
 ######################
 ### User Params:
-port = 'COM6'
+#port = 'COM6'
+#port = 'ttyS31'
 #####################
 #Create the global serial object
 ser1 = serial.Serial()
@@ -41,7 +42,7 @@ def init_comm(port):
 
     ser1 = serial.Serial(port, 9600, timeout=1)
     print(ser1.name)
-    print ("Serial Port is Open: %d\n" % ser1.is_open)
+#    print ("Serial Port is Open: %d\n" % ser1.is_open)
     ser1.reset_input_buffer()
     ser1.reset_output_buffer()
     time.sleep(1)
