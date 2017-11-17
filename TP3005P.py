@@ -18,6 +18,8 @@
 
 import serial
 import time
+import sys
+import os
 
 ######################
 ### User Params:
@@ -90,7 +92,25 @@ def volts_meas():
     ser1.write(cmd)
     line = ser1.readline()
     #print("Response: %s" % line)
-    volts = float(line.decode('utf8'))
+
+    try:
+        volts = float(line.decode('utf8'))
+    except Exception as e:
+        print('[-] SHTF.')
+        #raise # What does this do? test when code copied into next program!
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #print(exc_type, fname, exc_tb.tb_lineno) # why this not conv to str?
+        print('[-] Exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        sys.exit(10)
+    except ValueError:
+        print('[-] Known exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        print('Raw message from device: ' + line)
+        sys.exit(10)
     return volts
 
 
@@ -127,7 +147,24 @@ def status_get():
     ser1.write(cmd)
     line = ser1.readline()
     #print("Response: %s" % line)
-    status = int(line.decode('utf8'))
+    try:
+        status = int(line.decode('utf8'))
+    except Exception as e:
+        print('[-] SHTF.')
+        #raise # What does this do? test when code copied into next program!
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #print(exc_type, fname, exc_tb.tb_lineno) # why this not conv to str?
+        print('[-] Exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        sys.exit(10)
+    except ValueError:
+        print('[-] Known exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        print('Raw message from device: ' + line)
+        sys.exit(10)
     return status
 
 
