@@ -23,12 +23,18 @@ import time
 #-----------------------------------------------------------------------------
 # TODO: Huge inconsistency between Crate and current.. need to fix. but for now
 # the numbers work out for a 2S 1000 mAh battery
+# TODO: Add custom gentile profile/mode (keep crate low for packs with no
+# mfg data sheet)
+
+# TODO: premature cutoff also happens if no pack connected
 
 def ChargeBattery():
-    target_OCV = 8.2 # (V)
+    target_OCV = 4.1# (V)
+#    target_OCV = 8.2 # (V)
     C_min = 0.3
-    C_max = 1.0
-    batt_cap = 1 # (Ah) -- that's AMP HOURS!!
+    C_max = 1.0 # TODO: this needs to by dynamically updated
+    batt_cap = 0.650 # (Ah)
+#    batt_cap = 1 # (Ah) -- that's AMP HOURS!!
     C_cutoff = 0.05 # (or C/20)
     sleep_time = 1
 
@@ -44,17 +50,21 @@ def ChargeBattery():
         # 8.08 ~= 78%
         # 8.2 ~= 91%
         C_min = 0.3
-        target_OCV = 8.2
-        if OCV <= 6:
+        target_OCV = 4.1# TODO: update from above input????
+#        target_OCV = 8.2 # TODO: update from above input????
+        if OCV <= 3: # These per cell fracs can probs be found online 
+#        if OCV <= 6: # TODO: This is a fraction of 8.2, make it of capacity
+#            (Ah)
             # Danger low
             Crate = C_min
-        elif (OCV > 6) and (OCV <= 7):
+        elif (OCV > 3) and (OCV <= 3.5):
+#        elif (OCV > 6) and (OCV <= 7):
             Crate = 0.4
-        elif (OCV > 7) and (OCV <= 7.25):
+        elif (OCV > 3.5) and (OCV <= 7.25/2):
             Crate = 0.5
-        elif (OCV > 7.25) and (OCV <= 7.50):
+        elif (OCV > 7.25/2) and (OCV <= 7.50/2):
             Crate = 0.8
-        elif (OCV > 7.50) and (OCV <= target_OCV):
+        elif (OCV > 7.50/2) and (OCV <= target_OCV):
             Crate = 1.0
         else:
             # SHTF
