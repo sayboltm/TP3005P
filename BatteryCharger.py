@@ -88,7 +88,8 @@ def ChargeBattery():
                 Crate = amps/ batt_cap
 
                 if Crate <= C_cutoff:
-                    # C/20 reached
+                    # C/20 reached TODO: can be accidentally triggered by bad
+                    # wimpy connection
                     print('[+] Target SoC reached!\n Amps=' + str(amps) +
                             '\nVolts=' + str(OCV))
                     print('Shutting down machine.')
