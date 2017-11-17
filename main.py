@@ -6,6 +6,8 @@
 import NoGui as nog
 
 # TODO: move to a config file that's not on git
+# TODO: parameterize BatteryCharger
+# TODO: parameterize ports, add linux/win detection to use right one
 #port = 'COM6'
 port = '/dev/ttyUSB0'
 #port = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0'
