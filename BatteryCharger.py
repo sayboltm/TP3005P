@@ -4,6 +4,8 @@ import TP3005P as lib
 import sys
 import time
 
+import configparser
+import os, sys
 # TODO: Move comm init into here
 
 
@@ -27,8 +29,72 @@ import time
 # mfg data sheet)
 
 # TODO: premature cutoff also happens if no pack connected
+#    - use timer
 
+'''
+This charger function of the PSU is activated by user input 10 on nogui
+
+Need to load charge profiles and ask user which one they want
+
+Then execute using profile found in file
+    - option to execute differently, or just make separate charge profile.. i.e. drone 80% SoC
+
+Need less than 0% SoC safe trickle charge with user confirmation that it could blow their house up and they should use safe charging habits.
+
+'''
+def getParams():
+    ''' Gets charge params and SOC OCV stuff '''
+    config = configparser.ConfigParser()
+    config.sections()
+    config.read('ChargeProfiles/profiles.ini')
+    
+    count = 0
+    for item in config.sections(): 
+        print(item)
+        count +=1
+    print('Found ' + str(count) + ' configurations.')
+    
+    # TODO: check for consistent, readable wording
+    charge_profile = input('Input which one to explore:\n')
+    
+    valdict = {}
+    soc_ocv_dict = {}
+    soc_ocv_conf = configparser.ConfigParser()
+    soc_ocv_conf.sections()
+    soc_ocv_conf.read('ChargeProfiles/SOC_OCV.ini')
+    try:
+        for key in config[charge_profile]: 
+#            print(key + ': ' + config[somefield][key])
+            valdict[key] = config[charge_profile][key]
+        for key in soc_ocv_conf[charge_profile]:
+            soc_ocv_dict[key] = soc_ocv_conf[charge_profile][key]
+        # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one
+
+    #for key in config['LiIon']: print(key)
+
+    #for key in valdict: print(key + ': ' + valdict[key])
+
+    # Need to figure out if should put limits and sococv in one thing.. nested key/vals?? need internet
+
+    except KeyError:
+        # TODO: add verbosity
+        print('Key error, that was an invalid input, or there is a parameter name mismatch between the params.ini and SOC_OCV.ini.')
+    except Exception as e:
+        print('[-] SHTF.')
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #print(exc_type, fname, exc_tb.tb_lineno) # why this not conv to str?
+        print('[-] Exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        sys.exit(10)
+
+    return valdict, soc_ocv_dict
+
+        
 def ChargeBattery():
+    # TODO: integrate new getParams() dicts into this
+
     target_OCV = 4.1# (V)
 #    target_OCV = 8.2 # (V)
     C_min = 0.3
