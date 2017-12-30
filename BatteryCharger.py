@@ -65,9 +65,9 @@ def getParams():
     try:
         for key in config[charge_profile]: 
 #            print(key + ': ' + config[somefield][key])
-            valdict[key] = config[charge_profile][key]
+            valdict[key] = float(config[charge_profile][key])
         for key in soc_ocv_conf[charge_profile]:
-            soc_ocv_dict[key] = soc_ocv_conf[charge_profile][key]
+            soc_ocv_dict[key] = float(soc_ocv_conf[charge_profile][key])
         # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one
 
     #for key in config['LiIon']: print(key)
@@ -94,13 +94,22 @@ def getParams():
         
 def ChargeBattery():
     # TODO: integrate new getParams() dicts into this
+        # This requires either A) (better) sorting, charging based on relative data
+        #                      B) based on explicit SOC OCV (say 10% increments or so)
+            # Will probably use B since on airplane and no wifi -- easier
 
-    target_OCV = 4.1# (V)
+    # Get params
+    misc_params_dict, soc_ocv_dict = getParams()
+
+#    target_OCV = 4.1# (V)
 #    target_OCV = 8.2 # (V)
+    target_OCV = soc_ocv_dict['100']
     C_min = 0.3
-    C_max = 1.0 # TODO: this needs to by dynamically updated
-    batt_cap = 0.650 # (Ah)
+    C_max = 1.0 # TODO: this needs to by dynamically updated, especially the min
+#    batt_cap = 0.650 # (Ah)
 #    batt_cap = 1 # (Ah) -- that's AMP HOURS!!
+    batt_cap = misc_params_dict['Capacity']
+
     C_cutoff = 0.05 # (or C/20)
     sleep_time = 1
 
@@ -121,7 +130,7 @@ def ChargeBattery():
         if OCV <= 3: # These per cell fracs can probs be found online 
 #        if OCV <= 6: # TODO: This is a fraction of 8.2, make it of capacity
 #            (Ah)
-            # Danger low
+            # Danger low, disable output until user says yes.
             Crate = C_min
         elif (OCV > 3) and (OCV <= 3.5):
 #        elif (OCV > 6) and (OCV <= 7):
