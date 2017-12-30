@@ -15,7 +15,7 @@ def startupNoGUI(port):
     lib.init_comm(port)
     # TODO: Fix error #1 caused by init comms when psu is off
     while True:
-        print("Options:\n0 = quit\n1 = test PS function\n2=testCharger")
+        print("Options:\n0 = quit\n1 = test PS function\n2=testCharger\n10=chargeBattery")
         mode = input("Select one.\n")
 
         # Check to make sure user is not stupid and entered a char of type INT
