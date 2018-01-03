@@ -44,6 +44,8 @@ Need less than 0% SoC safe trickle charge with user confirmation that it could b
 '''
 def getParams():
     ''' Gets charge params and SOC OCV stuff '''
+    ''' Asks user what battery they want '''
+
     config = configparser.ConfigParser()
     config.sections()
     config.read('ChargeProfiles/profiles.ini')
@@ -62,6 +64,10 @@ def getParams():
     soc_ocv_conf = configparser.ConfigParser()
     soc_ocv_conf.sections()
     soc_ocv_conf.read('ChargeProfiles/SOC_OCV.ini')
+    c_rate_dict = {}
+    c_rate_conf = configparser.ConfigParser()
+    c_rate_conf.sections()
+    c_rate_conf.read('ChargeProfiles/c_rates.ini')
     try:
         for key in config[charge_profile]: 
 #            print(key + ': ' + config[somefield][key])
@@ -69,7 +75,8 @@ def getParams():
         for key in soc_ocv_conf[charge_profile]:
             soc_ocv_dict[key] = float(soc_ocv_conf[charge_profile][key])
         # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one
-
+        for key in c_rate_conf[charge_profile]:
+            c_rate_dict[key] = float(c_rate_conf[charge_profile][key])
     #for key in config['LiIon']: print(key)
 
     #for key in valdict: print(key + ': ' + valdict[key])
@@ -89,7 +96,51 @@ def getParams():
             + str(fname))
         sys.exit(10)
 
-    return valdict, soc_ocv_dict
+    return valdict, soc_ocv_dict, c_rate_dict
+
+def CrateDetect(OCV, c_rate_dict):
+    # 7.75 ~= 52%
+    # 8.08 ~= 78%
+    # 8.2 ~= 91%
+#    C_min = 0.3
+#    target_OCV = 4.1# TODO: update from above input????
+##        target_OCV = 8.2 # TODO: update from above input????
+#    if OCV <= 3: # These per cell fracs can probs be found online 
+##        if OCV <= 6: # TODO: This is a fraction of 8.2, make it of capacity
+##            (Ah)
+#        # Danger low, disable output until user says yes.
+#        Crate = C_min
+#    elif (OCV > 3) and (OCV <= 3.5):
+##        elif (OCV > 6) and (OCV <= 7):
+#        Crate = 0.4
+#    elif (OCV > 3.5) and (OCV <= 7.25/2):
+#        Crate = 0.5
+#    elif (OCV > 7.25/2) and (OCV <= 7.50/2):
+#        Crate = 0.8
+#    elif (OCV > 7.50/2) and (OCV <= target_OCV):
+#        Crate = 1.0
+#    else:
+#        # SHTF
+#        print('[-] TSHTF!! Kill all immediately! Stopping')
+#        lib.output_state(0)
+#        sys.exit(1)
+
+    # TODO: add soc/ocv conversion/funcs here or separately
+    data.get(num, data[min(data.keys(), key=lambda k: abs(k-num))])
+
+    c_rate_dict.get(num, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-num))])
+    
+    result = sorted(c_rate_dict.items() , key=lambda t : t[1])
+    # TODO: clean this up
+    for k,v in result:
+        print(k,v)
+        if k >= current_soc:
+            Crate = v
+            break
+     
+    
+
+    return Crate
 
         
 def ChargeBattery():
@@ -99,18 +150,21 @@ def ChargeBattery():
             # Will probably use B since on airplane and no wifi -- easier
 
     # Get params
-    misc_params_dict, soc_ocv_dict = getParams()
+    misc_params_dict, soc_ocv_dict, c_rate_dict = getParams()
 
 #    target_OCV = 4.1# (V)
 #    target_OCV = 8.2 # (V)
     target_OCV = soc_ocv_dict['100']
-    C_min = 0.3
-    C_max = 1.0 # TODO: this needs to by dynamically updated, especially the min
+#    C_min = 0.3
+    C_min = misc_params_dict['Cmin']
+#    C_max = 1.0 # TODO: this needs to by dynamically updated, especially the min
+    C_max = misc_params_dict['Cmax']
 #    batt_cap = 0.650 # (Ah)
 #    batt_cap = 1 # (Ah) -- that's AMP HOURS!!
     batt_cap = misc_params_dict['Capacity']
 
-    C_cutoff = 0.05 # (or C/20)
+#    C_cutoff = 0.05 # (or C/20)
+    C_cutoff = misc_params_dict['Ccutoff']
     sleep_time = 1
 
     # 1. Establish comms
@@ -120,34 +174,6 @@ def ChargeBattery():
     lib.output_state(1)
     charging = True
     # 3. Loop/monitor charging, adjusting rate
-    def CrateDetect(OCV):
-        # 7.75 ~= 52%
-        # 8.08 ~= 78%
-        # 8.2 ~= 91%
-        C_min = 0.3
-        target_OCV = 4.1# TODO: update from above input????
-#        target_OCV = 8.2 # TODO: update from above input????
-        if OCV <= 3: # These per cell fracs can probs be found online 
-#        if OCV <= 6: # TODO: This is a fraction of 8.2, make it of capacity
-#            (Ah)
-            # Danger low, disable output until user says yes.
-            Crate = C_min
-        elif (OCV > 3) and (OCV <= 3.5):
-#        elif (OCV > 6) and (OCV <= 7):
-            Crate = 0.4
-        elif (OCV > 3.5) and (OCV <= 7.25/2):
-            Crate = 0.5
-        elif (OCV > 7.25/2) and (OCV <= 7.50/2):
-            Crate = 0.8
-        elif (OCV > 7.50/2) and (OCV <= target_OCV):
-            Crate = 1.0
-        else:
-            # SHTF
-            print('[-] TSHTF!! Kill all immediately! Stopping')
-            lib.output_state(0)
-            sys.exit(1)
-        return Crate
-
     while charging == True:
         # get OCV
         OCV = lib.volts_meas()
