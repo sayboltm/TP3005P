@@ -98,6 +98,16 @@ def getParams():
 
     return valdict, soc_ocv_dict, c_rate_dict
 
+def SOCtoOCV(soc, soc_dict, ocv_dict):
+#https://stackoverflow.com/questions/7934547/python-find-closest-key-in-a-dictionary-from-the-given-input-key
+    ''' gets OCV closest to input SOC '''
+    # return value of key closest to input key (soc) (value == the ocv)
+    ocv = soc_dict.get(num, soc_dict[min(soc_dict.keys(), key=lambda k: abs(float(k)-soc))])
+    return ocv
+
+def OCVtoSOC(ocv, soc_ocv_dict):
+    pass
+    return soc
 def CrateDetect(OCV, c_rate_dict):
     # 7.75 ~= 52%
     # 8.08 ~= 78%
