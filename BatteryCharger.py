@@ -84,6 +84,7 @@ def getParams():
    
    # TODO: put in while loop in case user enters wrong battery
     # be sure to allow quitting at all times
+    # TODO: make a default set of options in some of these?
    try:
         for key in config[charge_profile]: 
 #            print(key + ': ' + config[somefield][key])
@@ -110,53 +111,49 @@ def getParams():
     return misc_params_dict, soc_ocv_dict, c_rate_dict
 
 def SOCtoOCV(soc, soc_dict):
+    ''' Gets OCV closest to input SOC
+            Inputs:
+                soc: State of Charge (float/int)
+                soc_dict: {SOC: OCV} 
+            Outputs:
+                ocv: Open circuit voltage (Volts, float)
+    '''
 #https://stackoverflow.com/questions/7934547/python-find-closest-key-in-a-dictionary-from-the-given-input-key
-    ''' gets OCV closest to input SOC '''
+
     # return value of key closest to input key (soc) (value == the ocv)
     ocv = soc_dict.get(soc, soc_dict[min(soc_dict.keys(), key=lambda k: abs(float(k)-soc))])
     return ocv
 
 def OCVtoSOC(ocv, soc_ocv_dict):
     ''' Gets SOC closest to input OCV
-            inverts the dict and runs like SOCtoOCV() '''
+            
+            Inputs:
+                ocv: Open circuit voltage (V, float)
+                soc_ocv_dict: {SOC: OCV}
+    '''
+    # Inverts the dict and runs like SOCtoOCV() 
     inverted_dict = dict([[v,k] for k,v in soc_ocv_dict.items()])
     soc = inverted_dict.get(ocv, inverted_dict[min(inverted_dict.keys(), key=lambda k: abs(float(k)-ocv))])
     return soc 
 
 def CrateDetect(SOC, c_rate_dict):
-    ''' Gets closest (rounds down floats to int) Crate from OCV '''
-#    else:
-#        # SHTF
-#        print('[-] TSHTF!! Kill all immediately! Stopping')
-#        lib.output_state(0)
-#        sys.exit(1)
-
-    # TODO: add soc/ocv conversion/funcs here or separately
-#    data.get(num, data[min(data.keys(), key=lambda k: abs(k-num))])
-
-#    c_rate_dict.get(num, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-num))])
-    
-#    result = sorted(c_rate_dict.items() , key=lambda t : t[1])
-#    # TODO: clean this up
-#    for k,v in result:
-#        print(k,v)
-#        if float(k) >= SOC:
-#            Crate = v
-#            break
-
+    ''' Gets closest (rounds down floats to int) Crate from OCV 
+        Inputs:
+            SOC: State of Charge (float)
+            c_rate_dict: {SOC: mfg_recommended_C-rate}
+        Outputs:
+            nearest_C_rate: closest C-rate based on SOC (float)
+    '''
     nearest_C_rate = c_rate_dict.get(SOC, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-SOC))])
 
-
     return nearest_C_rate
-
         
 def ChargeBattery():
-    # TODO: integrate new getParams() dicts into this
-        # This requires either A) (better) sorting, charging based on relative data
-        #                      B) based on explicit SOC OCV (say 10% increments or so)
-            # Will probably use B since on airplane and no wifi -- easier
+    ''' Main battery charging function. Calls everything necessary to charge connected battery correctly, based on user input and parameter files. See readme for actual file input information.
+    '''
 
-    # Get params
+    # TODO: Validate with real battery, clean up
+    # TODO: integrate new getParams() dicts int    # Get params
     misc_params_dict, soc_ocv_dict, c_rate_dict = getParams()
 
 #    target_OCV = 4.1# (V)
