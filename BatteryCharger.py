@@ -43,13 +43,36 @@ Need less than 0% SoC safe trickle charge with user confirmation that it could b
 
 '''
 def getParams():
-    ''' Gets charge params and SOC OCV stuff '''
-    ''' Asks user what battery they want '''
-
+    ''' Gets charge params and SOC OCV stuff. Asks user what battery they want
+            Inputs:
+                ./ChargeProfiles/SOC_OCV.ini    // SOC OCV table
+                ./ChargeProfiles/c_rates.ini    // C-rate at some SOC table
+            Returns:
+                misc_params_dict: misc. battery params dict
+                soc_ocv_dict: SOC: OCV dict
+                c_rate_dict: SOC: C-rate lookup dict
+    '''
+    
+    ### Set up the configparser for all INI files, declare dicts
+    # For general/misc battery parameters
     config = configparser.ConfigParser()
     config.sections()
-    config.read('ChargeProfiles/profiles.ini')
+    config.read('ChargeProfiles/params.ini')
+    misc_params_dict = {}
     
+    # For SOC/OCV lookup
+    soc_ocv_conf = configparser.ConfigParser()
+    soc_ocv_conf.sections()
+    soc_ocv_conf.read('ChargeProfiles/SOC_OCV.ini')
+    soc_ocv_dict = {}
+
+    # For C-rate/charge profile of some battery
+    c_rate_conf = configparser.ConfigParser()
+    c_rate_conf.sections()
+    c_rate_conf.read('ChargeProfiles/c_rates.ini')
+    c_rate_dict = {}
+   
+    ### Find configurations, have the user pick a battery
     count = 0
     for item in config.sections(): 
         print(item)
@@ -58,30 +81,18 @@ def getParams():
     
     # TODO: check for consistent, readable wording
     charge_profile = input('Input which one to explore:\n')
-    
-    valdict = {}
-    soc_ocv_dict = {}
-    soc_ocv_conf = configparser.ConfigParser()
-    soc_ocv_conf.sections()
-    soc_ocv_conf.read('ChargeProfiles/SOC_OCV.ini')
-    c_rate_dict = {}
-    c_rate_conf = configparser.ConfigParser()
-    c_rate_conf.sections()
-    c_rate_conf.read('ChargeProfiles/c_rates.ini')
-    try:
+   
+   # TODO: put in while loop in case user enters wrong battery
+    # be sure to allow quitting at all times
+   try:
         for key in config[charge_profile]: 
 #            print(key + ': ' + config[somefield][key])
-            valdict[key] = float(config[charge_profile][key])
+            misc_params_dict[key] = float(config[charge_profile][key])
         for key in soc_ocv_conf[charge_profile]:
             soc_ocv_dict[key] = float(soc_ocv_conf[charge_profile][key])
-        # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one
+        # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one or fill with invalid values
         for key in c_rate_conf[charge_profile]:
             c_rate_dict[key] = float(c_rate_conf[charge_profile][key])
-    #for key in config['LiIon']: print(key)
-
-    #for key in valdict: print(key + ': ' + valdict[key])
-
-    # Need to figure out if should put limits and sococv in one thing.. nested key/vals?? need internet
 
     except KeyError:
         # TODO: add verbosity
@@ -96,39 +107,24 @@ def getParams():
             + str(fname))
         sys.exit(10)
 
-    return valdict, soc_ocv_dict, c_rate_dict
+    return misc_params_dict, soc_ocv_dict, c_rate_dict
 
-def SOCtoOCV(soc, soc_dict, ocv_dict):
+def SOCtoOCV(soc, soc_dict):
 #https://stackoverflow.com/questions/7934547/python-find-closest-key-in-a-dictionary-from-the-given-input-key
     ''' gets OCV closest to input SOC '''
     # return value of key closest to input key (soc) (value == the ocv)
-    ocv = soc_dict.get(num, soc_dict[min(soc_dict.keys(), key=lambda k: abs(float(k)-soc))])
+    ocv = soc_dict.get(soc, soc_dict[min(soc_dict.keys(), key=lambda k: abs(float(k)-soc))])
     return ocv
 
 def OCVtoSOC(ocv, soc_ocv_dict):
-    pass
-    return soc
-def CrateDetect(OCV, c_rate_dict):
-    # 7.75 ~= 52%
-    # 8.08 ~= 78%
-    # 8.2 ~= 91%
-#    C_min = 0.3
-#    target_OCV = 4.1# TODO: update from above input????
-##        target_OCV = 8.2 # TODO: update from above input????
-#    if OCV <= 3: # These per cell fracs can probs be found online 
-##        if OCV <= 6: # TODO: This is a fraction of 8.2, make it of capacity
-##            (Ah)
-#        # Danger low, disable output until user says yes.
-#        Crate = C_min
-#    elif (OCV > 3) and (OCV <= 3.5):
-##        elif (OCV > 6) and (OCV <= 7):
-#        Crate = 0.4
-#    elif (OCV > 3.5) and (OCV <= 7.25/2):
-#        Crate = 0.5
-#    elif (OCV > 7.25/2) and (OCV <= 7.50/2):
-#        Crate = 0.8
-#    elif (OCV > 7.50/2) and (OCV <= target_OCV):
-#        Crate = 1.0
+    ''' Gets SOC closest to input OCV
+            inverts the dict and runs like SOCtoOCV() '''
+    inverted_dict = dict([[v,k] for k,v in soc_ocv_dict.items()])
+    soc = inverted_dict.get(ocv, inverted_dict[min(inverted_dict.keys(), key=lambda k: abs(float(k)-ocv))])
+    return soc 
+
+def CrateDetect(SOC, c_rate_dict):
+    ''' Gets closest (rounds down floats to int) Crate from OCV '''
 #    else:
 #        # SHTF
 #        print('[-] TSHTF!! Kill all immediately! Stopping')
@@ -136,21 +132,22 @@ def CrateDetect(OCV, c_rate_dict):
 #        sys.exit(1)
 
     # TODO: add soc/ocv conversion/funcs here or separately
-    data.get(num, data[min(data.keys(), key=lambda k: abs(k-num))])
+#    data.get(num, data[min(data.keys(), key=lambda k: abs(k-num))])
 
-    c_rate_dict.get(num, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-num))])
+#    c_rate_dict.get(num, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-num))])
     
-    result = sorted(c_rate_dict.items() , key=lambda t : t[1])
-    # TODO: clean this up
-    for k,v in result:
-        print(k,v)
-        if k >= current_soc:
-            Crate = v
-            break
-     
-    
+#    result = sorted(c_rate_dict.items() , key=lambda t : t[1])
+#    # TODO: clean this up
+#    for k,v in result:
+#        print(k,v)
+#        if float(k) >= SOC:
+#            Crate = v
+#            break
 
-    return Crate
+    nearest_C_rate = c_rate_dict.get(SOC, c_rate_dict[min(c_rate_dict.keys(), key=lambda k: abs(float(k)-SOC))])
+
+
+    return nearest_C_rate
 
         
 def ChargeBattery():
@@ -164,31 +161,32 @@ def ChargeBattery():
 
 #    target_OCV = 4.1# (V)
 #    target_OCV = 8.2 # (V)
+    #TODO: highest in profile, instead of 100. See CrateDetect function for ideas
     target_OCV = soc_ocv_dict['100']
 #    C_min = 0.3
-    C_min = misc_params_dict['Cmin']
+    c_min = misc_params_dict['c_min']
 #    C_max = 1.0 # TODO: this needs to by dynamically updated, especially the min
-    C_max = misc_params_dict['Cmax']
+    c_max = misc_params_dict['c_max']
 #    batt_cap = 0.650 # (Ah)
 #    batt_cap = 1 # (Ah) -- that's AMP HOURS!!
-    batt_cap = misc_params_dict['Capacity']
+    batt_cap = misc_params_dict['capacity']
 
 #    C_cutoff = 0.05 # (or C/20)
-    C_cutoff = misc_params_dict['Ccutoff']
+    c_cutoff = misc_params_dict['c_cutoff']
     sleep_time = 1
 
     # 1. Establish comms
     # 2. Set voltage to target_SoC, i to min, and turn on.
     lib.volts_setpoint_set(target_OCV)
-    lib.amps_setpoint_set(C_min*batt_cap)
+    lib.amps_setpoint_set(c_min*batt_cap)
     lib.output_state(1)
     charging = True
     # 3. Loop/monitor charging, adjusting rate
     while charging == True:
         # get OCV
         OCV = lib.volts_meas()
-
-        if OCV < target_OCV:
+#        SOC = OCVtoSOC(OCV, soc_ocv_dict)
+        if OCV < target_OCV: # must be done with measured OCV to avoid rounding/nearest value errors
             amps_tmp = lib.amps_meas()
             Crate_tmp = amps_tmp / batt_cap
             Crate = CrateDetect(OCV)
