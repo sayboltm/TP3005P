@@ -53,23 +53,25 @@ def getParams():
                 c_rate_dict: SOC: C-rate lookup dict
     '''
     
+    config_folder = 'Config/'
+
     ### Set up the configparser for all INI files, declare dicts
     # For general/misc battery parameters
     config = configparser.ConfigParser()
     config.sections()
-    config.read('ChargeProfiles/params.ini')
+    config.read(config_folder + 'params.ini')
     misc_params_dict = {}
     
     # For SOC/OCV lookup
     soc_ocv_conf = configparser.ConfigParser()
     soc_ocv_conf.sections()
-    soc_ocv_conf.read('ChargeProfiles/SOC_OCV.ini')
+    soc_ocv_conf.read(config_folder + 'SOC_OCV.ini')
     soc_ocv_dict = {}
 
     # For C-rate/charge profile of some battery
     c_rate_conf = configparser.ConfigParser()
     c_rate_conf.sections()
-    c_rate_conf.read('ChargeProfiles/c_rates.ini')
+    c_rate_conf.read(config_folder + 'c_rates.ini')
     c_rate_dict = {}
    
     ### Find configurations, have the user pick a battery
@@ -78,22 +80,23 @@ def getParams():
         print(item)
         count +=1
     print('Found ' + str(count) + ' configurations.')
-    
+    # TODO: Should check to make valid BEFORE telling the user these are good
+
     # TODO: check for consistent, readable wording
     charge_profile = input('Input which one to explore:\n')
    
    # TODO: put in while loop in case user enters wrong battery
     # be sure to allow quitting at all times
     # TODO: make a default set of options in some of these?
-   try:
+    try:
         for key in config[charge_profile]: 
 #            print(key + ': ' + config[somefield][key])
             misc_params_dict[key] = float(config[charge_profile][key])
         for key in soc_ocv_conf[charge_profile]:
-            soc_ocv_dict[key] = float(soc_ocv_conf[charge_profile][key])
+            soc_ocv_dict[float(key)] = float(soc_ocv_conf[charge_profile][key])
         # TODO: need to make sure soc ocv table is valid!!!!! user might forget to provide one or fill with invalid values
         for key in c_rate_conf[charge_profile]:
-            c_rate_dict[key] = float(c_rate_conf[charge_profile][key])
+            c_rate_dict[float(key)] = float(c_rate_conf[charge_profile][key])
 
     except KeyError:
         # TODO: add verbosity
@@ -110,7 +113,7 @@ def getParams():
 
     return misc_params_dict, soc_ocv_dict, c_rate_dict
 
-def SOCtoOCV(soc, soc_dict):
+def SOCtoOCV(soc, soc_ocv_dict):
     ''' Gets OCV closest to input SOC
             Inputs:
                 soc: State of Charge (float/int)
@@ -121,7 +124,7 @@ def SOCtoOCV(soc, soc_dict):
 #https://stackoverflow.com/questions/7934547/python-find-closest-key-in-a-dictionary-from-the-given-input-key
 
     # return value of key closest to input key (soc) (value == the ocv)
-    ocv = soc_dict.get(soc, soc_dict[min(soc_dict.keys(), key=lambda k: abs(float(k)-soc))])
+    ocv = soc_ocv_dict.get(soc, soc_ocv_dict[min(soc_ocv_dict.keys(), key=lambda k: abs(float(k)-soc))])
     return ocv
 
 def OCVtoSOC(ocv, soc_ocv_dict):
@@ -159,7 +162,7 @@ def ChargeBattery():
 #    target_OCV = 4.1# (V)
 #    target_OCV = 8.2 # (V)
     #TODO: highest in profile, instead of 100. See CrateDetect function for ideas
-    target_OCV = soc_ocv_dict['100']
+    target_OCV = soc_ocv_dict[100]
 #    C_min = 0.3
     c_min = misc_params_dict['c_min']
 #    C_max = 1.0 # TODO: this needs to by dynamically updated, especially the min
@@ -186,7 +189,12 @@ def ChargeBattery():
         if OCV < target_OCV: # must be done with measured OCV to avoid rounding/nearest value errors
             amps_tmp = lib.amps_meas()
             Crate_tmp = amps_tmp / batt_cap
-            Crate = CrateDetect(OCV)
+
+            # Wow fail changed so much stuff at once forgot to update this
+#            Crate = CrateDetect(OCV)
+            Crate = CrateDetect(OCVtoSOC(OCV, soc_ocv_dict), c_rate_dict)
+            # TODO: add printout that crate is changing as per the input file
+            # TODO: GRAPH the charge profile!? :D lolol
             amps = Crate * batt_cap
             if Crate != Crate_tmp:
                 print('Changing Crate. Old:' + str(Crate_tmp) + 
@@ -203,7 +211,7 @@ def ChargeBattery():
                 amps = lib.amps_meas()
                 Crate = amps/ batt_cap
 
-                if Crate <= C_cutoff:
+                if Crate <= c_cutoff:
                     # C/20 reached TODO: can be accidentally triggered by bad
                     # wimpy connection
                     print('[+] Target SoC reached!\n Amps=' + str(amps) +

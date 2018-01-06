@@ -148,7 +148,8 @@ def status_get():
     line = ser1.readline()
     #print("Response: %s" % line)
     try:
-        status = int(line.decode('utf8'))
+        status = int(line.decode('utf8')) # TODO: Fails if off.. but isn't
+        # caught by ValueError for some reason
     except Exception as e:
         print('[-] SHTF.')
         #raise # What does this do? test when code copied into next program!
