@@ -16,3 +16,4 @@ port = '/dev/ttyUSB0'
 
 if __name__ == "__main__":
    nog.startupNoGUI(port) 
+   ''' Test of multi-layer modular code '''
