@@ -156,7 +156,8 @@ def ChargeBattery():
     '''
 
     # TODO: Validate with real battery, clean up
-    # TODO: integrate new getParams() dicts int    # Get params
+
+    # Get SOC/OCV, allowed C-rates, misc params
     misc_params_dict, soc_ocv_dict, c_rate_dict = getParams()
 
 #    target_OCV = 4.1# (V)
@@ -222,6 +223,6 @@ def ChargeBattery():
                     lib.end_comm()
                     charging = False
     #                break
-                time.sleep(sleep_time)
+                time.sleep(sleep_time) # TODO: try lib.delay(secs)
         time.sleep(sleep_time)
 
