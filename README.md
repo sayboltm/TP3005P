@@ -4,6 +4,9 @@ This is software now just based on a library of sorts copied verbatim from the w
 me) on this blog:
 http://www.circumflex.systems/2017/06/controlling-tekpower-tp3005p-power.html
 
+And referenced in this Amazon review:
+https://www.amazon.com/gp/customer-reviews/R22P17TU9LSNN2/
+
 This now only makes up TP3005P.py, but this is even getting further dev.
 
 ----------------
