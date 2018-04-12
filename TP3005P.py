@@ -95,6 +95,22 @@ def volts_meas():
 
     try:
         volts = float(line.decode('utf8'))
+        return volts
+    except ValueError:
+        # Adding this in case it is failing printing te exception lol
+        # Yes, this is exactly what is happening! UnboundLocalError exc_type
+        # ref before assignment
+        print('[-] [-] Badness > 9000! SHTF.')
+        # does order matter? was that like else, then elif and not caught lol
+        print('[-] Known exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
+            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
+            + str(fname))
+        print('Raw message from device: ' + line)
+        sys.exit(10)
+        # WHY THE HELL will this not catch the ValueError when weird shit comes
+        # over the line???
+#    finally:
+
     except Exception as e:
         print('[-] SHTF.')
         #raise # What does this do? test when code copied into next program!
@@ -105,14 +121,6 @@ def volts_meas():
             + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
             + str(fname))
         sys.exit(10)
-    except ValueError:
-        print('[-] Known exception Caught.\nType: ' + str(exc_type) + '\nText: ' 
-            + str(e) + '\nLine: ' + str(exc_tb.tb_lineno) + '\nIn file: ' 
-            + str(fname))
-        print('Raw message from device: ' + line)
-        sys.exit(10)
-    return volts
-
 
 def amps_setpoint_set(amps):
     time.sleep(0.05)
