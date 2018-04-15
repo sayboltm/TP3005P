@@ -40,6 +40,8 @@ def delay(secs):
 
 #Initiate comm with PS
 def init_comm(port):
+    # Richard chose 'implicit serial declaration' where the object is implicitly referenced in background
+    # compare this to sayboltm/CSCAN explicit serial archetecture where serial object is returned and referenced. Not sure of pros/cons
     global ser1
 
     ser1 = serial.Serial(port, 9600, timeout=1)
