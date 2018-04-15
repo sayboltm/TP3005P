@@ -55,6 +55,13 @@ tpl.end_comm()
 
 # PLOT!!!!!!!!!!!!
 plt.figure()
-plt.plot(data_dict['voltage'][0], data_dict['voltage'][1])
+plt.plot(data_dict['voltage'][:][0], data_dict['voltage'][:][1])
 plt.xlabel('datetime')
 plt.show()
+
+''' loading/saving
+pickle.dump(data_dict, open('data_dict_04142018.p','wb'))
+
+#load:
+data_dict = pickle.lload(open('data_dict_04142018.p',rb'))
+'''
